@@ -24,10 +24,8 @@ export default function MarketPage() {
   const [maxPrice, setMaxPrice] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
 
-  // Use env var for backend
   const BACKEND_URL =
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    'http://localhost:5000' // fallback for dev
+    process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -76,6 +74,18 @@ export default function MarketPage() {
       body: JSON.stringify({ userId: user.id }),
     })
     socket.emit('delete-listing', id)
+  }
+
+  const handlePublish = async (id) => {
+    const res = await fetch(`${BACKEND_URL}/api/listings/${id}/publish`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id }),
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      socket.emit('update-listing', updated)
+    }
   }
 
   return (
@@ -216,6 +226,14 @@ export default function MarketPage() {
             <p className="text-gray-600 text-sm">Email: {item.email}</p>
             {isSignedIn && user.id === item.userId && (
               <div className="flex gap-2 mt-3">
+                {!item.published && (
+                  <button
+                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                    onClick={() => handlePublish(item._id)}
+                  >
+                    Publish
+                  </button>
+                )}
                 <button
                   className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
                   onClick={() => router.push(`/edit-item/${item._id}`)}

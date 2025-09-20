@@ -57,39 +57,53 @@ export default function ListItemPage() {
   const [contactNumber, setContactNumber] = useState('');
   const [email, setEmail] = useState(user?.primaryEmailAddress?.emailAddress || '');
   const [image, setImage] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isSignedIn) return;
 
-    let imageUrl = '';
-    if (image) {
-      const formData = new FormData();
-      formData.append('file', image);
-      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        { method: 'POST', body: formData }
-      );
-      const data = await res.json();
-      imageUrl = data.secure_url;
+    setSubmitting(true);
+
+    try {
+      let imageUrl = '';
+      if (image) {
+        const formData = new FormData();
+        formData.append('file', image);
+        formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
+        const res = await fetch(
+          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+          { method: 'POST', body: formData }
+        );
+        const data = await res.json();
+        imageUrl = data.secure_url;
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/listings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          price,
+          contactNumber,
+          email,
+          imageUrl,
+          userId: user.id,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to publish listing');
+      }
+
+      // Redirect to market so the new item shows
+      router.push('/market');
+    } catch (error) {
+      alert(error.message || 'Something went wrong while publishing');
+    } finally {
+      setSubmitting(false);
     }
-
-    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/listings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title,
-        description,
-        price,
-        contactNumber,
-        email,
-        imageUrl,
-        userId: user.id,
-      }),
-    });
-
-    router.push('/market');
   };
 
   if (loading)
@@ -206,9 +220,14 @@ export default function ListItemPage() {
           type="submit"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="w-full bg-green-600 text-white py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base md:text-lg shadow-md hover:bg-green-700 transition"
+          disabled={submitting}
+          className={`w-full py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base md:text-lg shadow-md transition ${
+            submitting
+              ? 'bg-gray-400 text-white cursor-not-allowed'
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
         >
-          Publish Listing
+          {submitting ? 'Publishing...' : 'Publish Listing'}
         </motion.button>
       </motion.form>
     </div>
