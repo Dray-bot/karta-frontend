@@ -88,6 +88,9 @@ export default function MarketPage() {
     }
   }
 
+  const placeholderImg =
+    'https://via.placeholder.com/400x300.png?text=No+Image+Available'
+
   return (
     <div className={`min-h-screen bg-white ${poppins.className}`}>
       {/* Navbar */}
@@ -203,23 +206,26 @@ export default function MarketPage() {
         {filteredListings.map((item) => (
           <motion.div
             key={item._id}
-            className="listing-card bg-white/80 backdrop-blur-lg border border-gray-200 p-4 rounded-xl shadow hover:shadow-xl transition relative"
-            whileHover={{ scale: 1.03 }}
+            className="listing-card bg-white/90 backdrop-blur-lg border border-gray-200 p-4 rounded-xl shadow hover:shadow-xl transition relative flex flex-col"
+            whileHover={{ scale: 1.02 }}
           >
-            {item.imageUrl && (
-              <img
-                src={item.imageUrl}
-                alt={item.title}
-                className="w-full h-48 object-cover mb-3 rounded-lg"
-              />
-            )}
+            <motion.img
+              src={item.imageUrl || placeholderImg}
+              alt={item.title}
+              className="w-full h-48 object-cover mb-3 rounded-lg shadow-sm"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.3 }}
+              onError={(e) => {
+                e.currentTarget.src = placeholderImg
+              }}
+            />
             <h3 className="font-bold text-lg mb-1 text-gray-900">
               {item.title}
             </h3>
             <p className="text-gray-700 mb-2 line-clamp-2">
               {item.description}
             </p>
-            <p className="font-semibold mb-2 text-green-600">${item.price}</p>
+            <p className="font-semibold mb-2 text-green-600">₦{item.price}</p>
             <p className="text-gray-600 mb-1 text-sm">
               Contact: {item.contactNumber}
             </p>

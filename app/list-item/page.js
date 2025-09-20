@@ -56,7 +56,8 @@ export default function ListItemPage() {
   const [price, setPrice] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [email, setEmail] = useState(user?.primaryEmailAddress?.emailAddress || '');
-  const [image, setImage] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imageUrl, setImageUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -66,17 +67,19 @@ export default function ListItemPage() {
     setSubmitting(true);
 
     try {
-      let imageUrl = '';
-      if (image) {
+      let uploadedUrl = imageUrl;
+
+      // Upload image to Cloudinary if new file selected
+      if (imageFile) {
         const formData = new FormData();
-        formData.append('file', image);
+        formData.append('file', imageFile);
         formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
         const res = await fetch(
           `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
           { method: 'POST', body: formData }
         );
         const data = await res.json();
-        imageUrl = data.secure_url;
+        uploadedUrl = data.secure_url;
       }
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/listings`, {
@@ -88,7 +91,7 @@ export default function ListItemPage() {
           price,
           contactNumber,
           email,
-          imageUrl,
+          imageUrl: uploadedUrl,
           userId: user.id,
         }),
       });
@@ -97,7 +100,6 @@ export default function ListItemPage() {
         throw new Error('Failed to publish listing');
       }
 
-      // Redirect to market so the new item shows
       router.push('/market');
     } catch (error) {
       alert(error.message || 'Something went wrong while publishing');
@@ -205,14 +207,30 @@ export default function ListItemPage() {
           />
         </div>
 
-        {/* File Upload */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 shrink-0" />
-          <input
-            type="file"
-            onChange={(e) => setImage(e.target.files[0])}
-            className="flex-1 border border-gray-300 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-sm sm:text-base cursor-pointer text-gray-800"
-          />
+        {/* File Upload with Preview */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 shrink-0" />
+            <input
+              type="file"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                setImageFile(file);
+                if (file) {
+                  const previewUrl = URL.createObjectURL(file);
+                  setImageUrl(previewUrl);
+                }
+              }}
+              className="flex-1 border border-gray-300 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-sm sm:text-base cursor-pointer text-gray-800"
+            />
+          </div>
+          {imageUrl && (
+            <img
+              src={imageUrl}
+              alt="Preview"
+              className="w-full max-h-64 object-cover rounded-lg shadow"
+            />
+          )}
         </div>
 
         {/* Submit */}
