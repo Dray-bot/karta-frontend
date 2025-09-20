@@ -66,16 +66,16 @@ export default function ListItemPage() {
     if (image) {
       const formData = new FormData();
       formData.append('file', image);
-      formData.append('upload_preset', 'ml_default');
+      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
       const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUD_NAME}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
         { method: 'POST', body: formData }
       );
       const data = await res.json();
       imageUrl = data.secure_url;
     }
 
-    await fetch('http://localhost:5000/api/listings', {
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/listings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -208,7 +208,7 @@ export default function ListItemPage() {
           whileTap={{ scale: 0.95 }}
           className="w-full bg-green-600 text-white py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base md:text-lg shadow-md hover:bg-green-700 transition"
         >
-          Publish Listing 🚀
+          Publish Listing
         </motion.button>
       </motion.form>
     </div>

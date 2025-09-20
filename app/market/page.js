@@ -24,15 +24,20 @@ export default function MarketPage() {
   const [maxPrice, setMaxPrice] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
 
+  // Use env var for backend
+  const BACKEND_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    'http://localhost:5000' // fallback for dev
+
   useEffect(() => {
     const fetchListings = async () => {
-      const res = await fetch('http://localhost:5000/api/listings')
+      const res = await fetch(`${BACKEND_URL}/api/listings`)
       const data = await res.json()
       setListings(data)
     }
     fetchListings()
 
-    socket = io('http://localhost:5000')
+    socket = io(BACKEND_URL)
     socket.on('new-listing', (newItem) =>
       setListings((prev) => [newItem, ...prev])
     )
@@ -46,7 +51,7 @@ export default function MarketPage() {
     )
 
     return () => socket.disconnect()
-  }, [])
+  }, [BACKEND_URL])
 
   useEffect(() => {
     gsap.from('.listing-card', {
@@ -65,7 +70,7 @@ export default function MarketPage() {
   )
 
   const handleDelete = async (id) => {
-    await fetch(`http://localhost:5000/api/listings/${id}`, {
+    await fetch(`${BACKEND_URL}/api/listings/${id}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: user.id }),
